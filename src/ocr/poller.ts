@@ -12,6 +12,7 @@ export class OcrPoller {
     private log: Logger;
     private timer: ReturnType<typeof setInterval> | null = null;
     private seeded = false;
+    private polling = false;
 
     constructor(
         config: Config,
@@ -48,6 +49,11 @@ export class OcrPoller {
     }
 
     private async poll(): Promise<void> {
+        if (this.polling) {
+            this.log.debug('Previous poll still running, skipping');
+            return;
+        }
+        this.polling = true;
         try {
             const documents = await this.papra.listDocuments();
 
@@ -100,6 +106,8 @@ export class OcrPoller {
             }
         } catch (err) {
             this.log.error({ err }, 'Poll cycle failed');
+        } finally {
+            this.polling = false;
         }
     }
 }
