@@ -18,7 +18,7 @@ Polls Papra for PDF documents, converts pages to images, sends them to any OpenA
 
 After OCR, the first page text is sent back to the LLM to automatically extract:
 
-- **Document name** -- generates a descriptive name from the document content (e.g. "scan_001.pdf" becomes "Acme Corp — Invoice #2026-01-035.pdf"). The format is configurable via `OCR_TITLE_FORMAT`
+- **Document name** -- generates a descriptive name from the document content (e.g. "scan_001.pdf" becomes "Acme Corp — Invoice #2026-01-035.pdf"). The format is configurable via `OCR_NAME_FORMAT`
 - **Document date** -- sets the document date in Papra based on dates found in the text
 - **Tags** -- matches document content against your existing Papra tags and applies any that fit
 
@@ -60,25 +60,25 @@ papra-ai:
 
 ## Configuration
 
-| Variable                    | Required | Default                       | Description                                            |
-| --------------------------- | -------- | ----------------------------- | ------------------------------------------------------ |
-| `PAPRA_API_URL`             | yes      | --                            | Papra instance URL (e.g. `http://papra:1221`)          |
-| `PAPRA_API_KEY`             | yes      | --                            | Papra API key with document read/write access          |
-| `PAPRA_ORG_ID`              | yes      | --                            | Papra organization ID                                  |
-| `OCR_API_URL`               | yes      | --                            | OpenAI-compatible vision API base URL                  |
-| `OCR_API_KEY`               | yes      | --                            | API key for the vision model provider                  |
-| `OCR_MODEL`                 | no       | `google/gemini-2.5-flash` | Vision model identifier                                |
-| `OCR_CONCURRENCY`           | no       | `3`                           | Number of PDF pages processed in parallel per document |
-| `OCR_IMAGE_SCALE`           | no       | `2`                           | Scale factor for PDF page rendering                    |
-| `OCR_POLL_INTERVAL_SECONDS` | no       | `60`                          | Seconds between polling for new documents              |
-| `OCR_PROCESS_EXISTING`      | no       | `true`                        | Set to `false` to skip existing documents on first run |
-| `OCR_EXTRACT_NAME`          | no       | `true`                        | Extract document title from first page and rename      |
-| `OCR_TITLE_FORMAT`          | no       | `{sender} — {type} {detail}` | Title format template with placeholders                |
-| `OCR_EXTRACT_DATE`          | no       | `true`                        | Extract document date from first page                  |
-| `OCR_EXTRACT_TAGS`          | no       | `true`                        | Match and apply existing Papra tags to documents       |
-| `API_PORT`                  | no       | `7777`                        | Port for the reprocess API server                      |
-| `DATA_DIR`                  | no       | `./data`                      | Directory for persisting processed document state      |
-| `LOG_LEVEL`                 | no       | `info`                        | Log level (`debug`, `info`, `warn`, `error`)           |
+| Variable                    | Required | Default                      | Description                                            |
+| --------------------------- | -------- | ---------------------------- | ------------------------------------------------------ |
+| `PAPRA_API_URL`             | yes      | --                           | Papra instance URL (e.g. `http://papra:1221`)          |
+| `PAPRA_API_KEY`             | yes      | --                           | Papra API key with document read/write access          |
+| `PAPRA_ORG_ID`              | yes      | --                           | Papra organization ID                                  |
+| `OCR_API_URL`               | yes      | --                           | OpenAI-compatible vision API base URL                  |
+| `OCR_API_KEY`               | yes      | --                           | API key for the vision model provider                  |
+| `OCR_MODEL`                 | no       | `google/gemini-2.5-flash`    | Vision model identifier                                |
+| `OCR_CONCURRENCY`           | no       | `3`                          | Number of PDF pages processed in parallel per document |
+| `OCR_IMAGE_SCALE`           | no       | `2`                          | Scale factor for PDF page rendering                    |
+| `OCR_POLL_INTERVAL_SECONDS` | no       | `60`                         | Seconds between polling for new documents              |
+| `OCR_PROCESS_EXISTING`      | no       | `true`                       | Set to `false` to skip existing documents on first run |
+| `OCR_EXTRACT_NAME`          | no       | `true`                       | Extract document name from first page and rename       |
+| `OCR_NAME_FORMAT`           | no       | `{sender} — {type} {detail}` | Name format template with placeholders                 |
+| `OCR_EXTRACT_DATE`          | no       | `true`                       | Extract document date from first page                  |
+| `OCR_EXTRACT_TAGS`          | no       | `true`                       | Match and apply existing Papra tags to documents       |
+| `API_PORT`                  | no       | `7777`                       | Port for the reprocess API server                      |
+| `DATA_DIR`                  | no       | `./data`                     | Directory for persisting processed document state      |
+| `LOG_LEVEL`                 | no       | `info`                       | Log level (`debug`, `info`, `warn`, `error`)           |
 
 ### Reprocessing documents
 

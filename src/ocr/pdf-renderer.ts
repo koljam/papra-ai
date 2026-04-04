@@ -2,7 +2,6 @@ import { createCanvas } from '@napi-rs/canvas';
 import type { Logger } from '../logger.js';
 
 export interface RenderedPage {
-    pageNumber: number;
     image: Buffer;
 }
 
@@ -53,7 +52,6 @@ export async function renderPdfPages(
         }).promise;
 
         pages.push({
-            pageNumber: i,
             image: canvas.toBuffer('image/png'),
         });
 

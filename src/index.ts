@@ -30,14 +30,10 @@ const poller = new OcrPoller(config, papra, processor, state, log);
 poller.start();
 startApiServer(config.apiPort, state, log);
 
-process.on('SIGINT', () => {
+const shutdown = () => {
     log.info('Shutting down');
     poller.stop();
     process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-    log.info('Shutting down');
-    poller.stop();
-    process.exit(0);
-});
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

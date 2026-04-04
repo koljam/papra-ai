@@ -25,7 +25,7 @@ export class PapraClient {
     private log: Logger;
 
     constructor(config: Config['papra'], log: Logger) {
-        this.baseUrl = config.apiUrl.replace(/\/$/, '');
+        this.baseUrl = config.apiUrl;
         this.orgId = config.orgId;
         this.headers = {
             Authorization: `Bearer ${config.apiKey}`,
@@ -35,6 +35,10 @@ export class PapraClient {
 
     private url(path: string): string {
         return `${this.baseUrl}/api/organizations/${this.orgId}${path}`;
+    }
+
+    private jsonHeaders(): Record<string, string> {
+        return { ...this.headers, 'Content-Type': 'application/json' };
     }
 
     async listDocuments(): Promise<PapraDocument[]> {
@@ -53,8 +57,9 @@ export class PapraClient {
             );
 
             if (!res.ok) {
+                const body = await res.text();
                 throw new Error(
-                    `Failed to list documents: ${res.status} ${res.statusText}`,
+                    `Failed to list documents: ${res.status} ${body}`,
                 );
             }
 
@@ -75,8 +80,9 @@ export class PapraClient {
         });
 
         if (!res.ok) {
+            const body = await res.text();
             throw new Error(
-                `Failed to get document ${documentId}: ${res.status} ${res.statusText}`,
+                `Failed to get document ${documentId}: ${res.status} ${body}`,
             );
         }
 
@@ -90,8 +96,9 @@ export class PapraClient {
         });
 
         if (!res.ok) {
+            const body = await res.text();
             throw new Error(
-                `Failed to download document ${documentId}: ${res.status} ${res.statusText}`,
+                `Failed to download document ${documentId}: ${res.status} ${body}`,
             );
         }
 
@@ -115,20 +122,21 @@ export class PapraClient {
     ): Promise<void> {
         const res = await fetch(this.url(`/documents/${documentId}`), {
             method: 'PATCH',
-            headers: {
-                ...this.headers,
-                'Content-Type': 'application/json',
-            },
+            headers: this.jsonHeaders(),
             body: JSON.stringify(updates),
         });
 
         if (!res.ok) {
+            const body = await res.text();
             throw new Error(
-                `Failed to update document ${documentId}: ${res.status} ${res.statusText}`,
+                `Failed to update document ${documentId}: ${res.status} ${body}`,
             );
         }
 
-        this.log.info({ documentId, fields: Object.keys(updates) }, 'Updated document');
+        this.log.info(
+            { documentId, fields: Object.keys(updates) },
+            'Updated document',
+        );
     }
 
     async listTags(): Promise<PapraTag[]> {
@@ -137,31 +145,25 @@ export class PapraClient {
         });
 
         if (!res.ok) {
-            throw new Error(
-                `Failed to list tags: ${res.status} ${res.statusText}`,
-            );
+            const body = await res.text();
+            throw new Error(`Failed to list tags: ${res.status} ${body}`);
         }
 
         const data = (await res.json()) as { tags: PapraTag[] };
         return data.tags;
     }
 
-    async addTagToDocument(
-        documentId: string,
-        tagId: string,
-    ): Promise<void> {
+    async addTagToDocument(documentId: string, tagId: string): Promise<void> {
         const res = await fetch(this.url(`/documents/${documentId}/tags`), {
             method: 'POST',
-            headers: {
-                ...this.headers,
-                'Content-Type': 'application/json',
-            },
+            headers: this.jsonHeaders(),
             body: JSON.stringify({ tagId }),
         });
 
         if (!res.ok) {
+            const body = await res.text();
             throw new Error(
-                `Failed to add tag ${tagId} to document ${documentId}: ${res.status} ${res.statusText}`,
+                `Failed to add tag ${tagId} to document ${documentId}: ${res.status} ${body}`,
             );
         }
     }

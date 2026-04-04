@@ -1,26 +1,26 @@
 import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 
-function buildMetadataPrompt(titleFormat?: string): string {
-    const titleFormatSection = titleFormat
-        ? `- Format the title as: ${titleFormat}
+function buildMetadataPrompt(nameFormat?: string): string {
+    const nameFormatSection = nameFormat
+        ? `- Format the name as: ${nameFormat}
   where each placeholder is filled from the document content. Omit placeholders you cannot fill.
 `
         : '';
 
-    return `You are a document metadata extractor. Given the text content of a document's first page, extract a descriptive title, the document date, and applicable tags.
+    return `You are a document metadata extractor. Given the text content of a document's first page, extract a descriptive name, the document date, and applicable tags.
 
 Rules:
 
-title:
+name:
 - Create a short, descriptive name that helps identify this specific document in a list.
 - Include the sender or issuing organization.
 - Include the document type (e.g. invoice, contract, notice, certificate, receipt).
 - Optionally include a key identifier like a reference number, invoice number, policy number, or time period.
 - Do NOT just copy the first heading or subject line verbatim -- synthesize a meaningful, identifiable name from the document content.
-${titleFormatSection}- Keep it concise: aim for under 80 characters.
-- Use the document's language for the title.
-- If there is truly not enough information to construct a title, return null.
+${nameFormatSection}- Keep it concise: aim for under 80 characters.
+- Use the document's language for the name.
+- If there is truly not enough information to construct a name, return null.
 
 date:
 - The document's date (e.g. letter date, invoice date, report date, publication date).
@@ -38,9 +38,9 @@ General:
 - Do NOT guess or fabricate values -- only extract what is clearly present in the text.`;
 }
 
-function buildMetadataSchema(titleFormat?: string) {
-    const titleDesc = titleFormat
-        ? `A short, descriptive document name formatted as: ${titleFormat} — or null if not determinable`
+function buildMetadataSchema(nameFormat?: string) {
+    const nameDesc = nameFormat
+        ? `A short, descriptive document name formatted as: ${nameFormat} — or null if not determinable`
         : 'A short, descriptive document name including sender and document type, or null if not determinable';
 
     return {
@@ -50,9 +50,9 @@ function buildMetadataSchema(titleFormat?: string) {
             schema: {
                 type: 'object',
                 properties: {
-                    title: {
+                    name: {
                         type: ['string', 'null'],
-                        description: titleDesc,
+                        description: nameDesc,
                     },
                     date: {
                         type: ['string', 'null'],
@@ -66,7 +66,7 @@ function buildMetadataSchema(titleFormat?: string) {
                             'Tag names from the available set that apply to this document, or empty array if none apply',
                     },
                 },
-                required: ['title', 'date', 'tags'],
+                required: ['name', 'date', 'tags'],
                 additionalProperties: false,
             },
         },
@@ -116,7 +116,7 @@ export async function extractTextFromImage(
         },
     ];
 
-    const url = `${config.apiUrl.replace(/\/$/, '')}/chat/completions`;
+    const url = `${config.apiUrl}/chat/completions`;
 
     const res = await fetch(url, {
         method: 'POST',
@@ -148,7 +148,7 @@ export async function extractTextFromImage(
 }
 
 export interface DocumentMetadata {
-    title: string | null;
+    name: string | null;
     date: string | null;
     tags: string[];
 }
@@ -158,7 +158,7 @@ export async function extractDocumentMetadata(
     config: Config['ocr'],
     log: Logger,
     availableTagNames?: string[],
-    titleFormat?: string,
+    nameFormat?: string,
 ): Promise<DocumentMetadata> {
     const tagSection =
         availableTagNames && availableTagNames.length > 0
@@ -166,14 +166,14 @@ export async function extractDocumentMetadata(
             : '';
 
     const messages: ChatMessage[] = [
-        { role: 'system', content: buildMetadataPrompt(titleFormat) },
+        { role: 'system', content: buildMetadataPrompt(nameFormat) },
         {
             role: 'user',
-            content: `Extract the title, date, and applicable tags from this document text:${tagSection}\n\n${text}`,
+            content: `Extract the name, date, and applicable tags from this document text:${tagSection}\n\n${text}`,
         },
     ];
 
-    const url = `${config.apiUrl.replace(/\/$/, '')}/chat/completions`;
+    const url = `${config.apiUrl}/chat/completions`;
 
     const res = await fetch(url, {
         method: 'POST',
@@ -184,7 +184,7 @@ export async function extractDocumentMetadata(
         body: JSON.stringify({
             model: config.model,
             messages,
-            response_format: buildMetadataSchema(titleFormat),
+            response_format: buildMetadataSchema(nameFormat),
             temperature: 0,
         }),
     });

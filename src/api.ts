@@ -32,7 +32,10 @@ export function startApiServer(
                     );
                 }
             } catch (err) {
-                apiLog.error({ err, documentId }, 'Failed to mark for reprocessing');
+                apiLog.error(
+                    { err, documentId },
+                    'Failed to mark for reprocessing',
+                );
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'internal_error' }));
             }

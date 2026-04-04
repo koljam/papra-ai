@@ -1,25 +1,28 @@
 import { z } from 'zod';
 
+const urlSchema = z
+    .string()
+    .url()
+    .transform((url) => url.replace(/\/$/, ''));
+
 const configSchema = z.object({
     papra: z.object({
-        apiUrl: z.string().url(),
+        apiUrl: urlSchema,
         apiKey: z.string().min(1),
         orgId: z.string().min(1),
     }),
     ocr: z.object({
-        apiUrl: z.string().url(),
+        apiUrl: urlSchema,
         apiKey: z.string().min(1),
         model: z.string().default('google/gemini-2.5-flash'),
-        concurrency: z.coerce.number().int().positive().default(3),
-        imageScale: z.coerce.number().positive().default(2),
+        concurrency: z.coerce.number().int().positive().max(50).default(3),
+        imageScale: z.coerce.number().positive().max(10).default(2),
         pollIntervalSeconds: z.coerce.number().int().positive().default(60),
         processExisting: z.coerce.boolean().default(true),
         extractName: z.coerce.boolean().default(true),
         extractDate: z.coerce.boolean().default(true),
         extractTags: z.coerce.boolean().default(true),
-        titleFormat: z
-            .string()
-            .default('{sender} — {type} {detail}'),
+        nameFormat: z.string().default('{sender} — {type} {detail}'),
     }),
     apiPort: z.coerce.number().int().positive().default(7777),
     dataDir: z.string().default('./data'),
@@ -46,10 +49,10 @@ export function loadConfig(): Config {
             extractName: process.env.OCR_EXTRACT_NAME,
             extractDate: process.env.OCR_EXTRACT_DATE,
             extractTags: process.env.OCR_EXTRACT_TAGS,
-            titleFormat: process.env.OCR_TITLE_FORMAT,
+            nameFormat: process.env.OCR_NAME_FORMAT,
         },
         apiPort: process.env.API_PORT,
         dataDir: process.env.DATA_DIR,
-        logLevel: process.env.LOG_LEVEL as Config['logLevel'],
+        logLevel: process.env.LOG_LEVEL,
     });
 }

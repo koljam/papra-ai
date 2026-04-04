@@ -2,10 +2,7 @@ import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 import { PapraClient } from '../papra-client.js';
 import { renderPdfPages } from './pdf-renderer.js';
-import {
-    extractTextFromImage,
-    extractDocumentMetadata,
-} from './llm-client.js';
+import { extractTextFromImage, extractDocumentMetadata } from './llm-client.js';
 import type { PapraTag } from '../papra-client.js';
 import { extname } from 'node:path';
 
@@ -92,13 +89,16 @@ export class OcrProcessor {
                     this.config.ocr,
                     log,
                     tagNames.length > 0 ? tagNames : undefined,
-                    this.config.ocr.titleFormat,
+                    this.config.ocr.nameFormat,
                 );
 
-                if (extractName && metadata.title) {
+                if (extractName && metadata.name) {
                     const ext = extname(doc.name) || '.pdf';
-                    updates.name = `${metadata.title}${ext}`;
-                    log.info({ newName: updates.name }, 'Extracted document name');
+                    updates.name = `${metadata.name}${ext}`;
+                    log.info(
+                        { newName: updates.name },
+                        'Extracted document name',
+                    );
                 }
 
                 if (extractDate && metadata.date) {
@@ -117,7 +117,10 @@ export class OcrProcessor {
                     for (const tagName of metadata.tags) {
                         const tagId = tagMap.get(tagName.toLowerCase());
                         if (tagId) {
-                            await this.papra.addTagToDocument(documentId, tagId);
+                            await this.papra.addTagToDocument(
+                                documentId,
+                                tagId,
+                            );
                             log.info({ tagName }, 'Added tag to document');
                         } else {
                             log.warn(
