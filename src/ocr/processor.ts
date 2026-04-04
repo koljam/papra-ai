@@ -92,6 +92,7 @@ export class OcrProcessor {
                     this.config.ocr,
                     log,
                     tagNames.length > 0 ? tagNames : undefined,
+                    this.config.ocr.titleFormat,
                 );
 
                 if (extractName && metadata.title) {

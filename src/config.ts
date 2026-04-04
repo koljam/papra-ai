@@ -17,6 +17,9 @@ const configSchema = z.object({
         extractName: z.coerce.boolean().default(true),
         extractDate: z.coerce.boolean().default(true),
         extractTags: z.coerce.boolean().default(true),
+        titleFormat: z
+            .string()
+            .default('{sender} — {type} {detail}'),
     }),
     apiPort: z.coerce.number().int().positive().default(7777),
     dataDir: z.string().default('./data'),
@@ -43,6 +46,7 @@ export function loadConfig(): Config {
             extractName: process.env.OCR_EXTRACT_NAME,
             extractDate: process.env.OCR_EXTRACT_DATE,
             extractTags: process.env.OCR_EXTRACT_TAGS,
+            titleFormat: process.env.OCR_TITLE_FORMAT,
         },
         apiPort: process.env.API_PORT,
         dataDir: process.env.DATA_DIR,

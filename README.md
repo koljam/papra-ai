@@ -18,7 +18,7 @@ Polls Papra for PDF documents, converts pages to images, sends them to any OpenA
 
 After OCR, the first page text is sent back to the LLM to automatically extract:
 
-- **Document name** -- renames the document in Papra to match its actual title (e.g. "scan_001.pdf" becomes "Invoice #1234.pdf")
+- **Document name** -- generates a descriptive name from the document content (e.g. "scan_001.pdf" becomes "Acme Corp — Invoice #2026-01-035.pdf"). The format is configurable via `OCR_TITLE_FORMAT`
 - **Document date** -- sets the document date in Papra based on dates found in the text
 - **Tags** -- matches document content against your existing Papra tags and applies any that fit
 
@@ -73,6 +73,7 @@ papra-ai:
 | `OCR_POLL_INTERVAL_SECONDS` | no       | `60`                          | Seconds between polling for new documents              |
 | `OCR_PROCESS_EXISTING`      | no       | `true`                        | Set to `false` to skip existing documents on first run |
 | `OCR_EXTRACT_NAME`          | no       | `true`                        | Extract document title from first page and rename      |
+| `OCR_TITLE_FORMAT`          | no       | `{sender} — {type} {detail}` | Title format template with placeholders                |
 | `OCR_EXTRACT_DATE`          | no       | `true`                        | Extract document date from first page                  |
 | `OCR_EXTRACT_TAGS`          | no       | `true`                        | Match and apply existing Papra tags to documents       |
 | `API_PORT`                  | no       | `7777`                        | Port for the reprocess API server                      |
