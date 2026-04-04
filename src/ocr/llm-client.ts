@@ -1,11 +1,12 @@
 import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 
-const METADATA_SYSTEM_PROMPT = `You are a document metadata extractor. Given the text content of a document's first page, extract the document title and date.
+const METADATA_SYSTEM_PROMPT = `You are a document metadata extractor. Given the text content of a document's first page, extract the document title, date, and applicable tags.
 
 Rules:
 - title: The main title, heading, or name of the document as it appears in the text. If there is no clear title, return null.
 - date: The document's date (e.g. letter date, invoice date, report date, publication date). Return in ISO 8601 format (e.g. "2024-01-15T00:00:00.000Z"). If there is no clear date, return null.
+- tags: Select ONLY from the provided list of available tags. Pick tags that clearly apply to the document content. Return an empty array if no tags apply or none are provided.
 - Do NOT guess or fabricate values -- only extract what is clearly present in the text.`;
 
 const METADATA_SCHEMA = {
@@ -25,8 +26,14 @@ const METADATA_SCHEMA = {
                     description:
                         'The document date in ISO 8601 format (e.g. 2024-01-15T00:00:00.000Z), or null if not determinable',
                 },
+                tags: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description:
+                        'Tag names from the available set that apply to this document, or empty array if none apply',
+                },
             },
-            required: ['title', 'date'],
+            required: ['title', 'date', 'tags'],
             additionalProperties: false,
         },
     },
@@ -109,18 +116,25 @@ export async function extractTextFromImage(
 export interface DocumentMetadata {
     title: string | null;
     date: string | null;
+    tags: string[];
 }
 
 export async function extractDocumentMetadata(
     text: string,
     config: Config['ocr'],
     log: Logger,
+    availableTagNames?: string[],
 ): Promise<DocumentMetadata> {
+    const tagSection =
+        availableTagNames && availableTagNames.length > 0
+            ? `\n\nAvailable tags: ${availableTagNames.join(', ')}`
+            : '';
+
     const messages: ChatMessage[] = [
         { role: 'system', content: METADATA_SYSTEM_PROMPT },
         {
             role: 'user',
-            content: `Extract the title and date from this document text:\n\n${text}`,
+            content: `Extract the title, date, and applicable tags from this document text:${tagSection}\n\n${text}`,
         },
     ];
 

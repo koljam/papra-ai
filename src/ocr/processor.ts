@@ -2,7 +2,11 @@ import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 import { PapraClient } from '../papra-client.js';
 import { renderPdfPages } from './pdf-renderer.js';
-import { extractTextFromImage, extractDocumentMetadata } from './llm-client.js';
+import {
+    extractTextFromImage,
+    extractDocumentMetadata,
+} from './llm-client.js';
+import type { PapraTag } from '../papra-client.js';
 import { extname } from 'node:path';
 
 export class OcrProcessor {
@@ -67,15 +71,27 @@ export class OcrProcessor {
             documentDate?: string;
         } = { content: fullText };
 
-        const { extractName, extractDate } = this.config.ocr;
+        const { extractName, extractDate, extractTags } = this.config.ocr;
         const firstPageText = pageTexts[0];
+        const needsMetadata = extractName || extractDate || extractTags;
 
-        if (firstPageText && (extractName || extractDate)) {
+        if (firstPageText && needsMetadata) {
             try {
+                let availableTags: PapraTag[] = [];
+                if (extractTags) {
+                    availableTags = await this.papra.listTags();
+                    log.debug(
+                        { tagCount: availableTags.length },
+                        'Fetched available tags',
+                    );
+                }
+
+                const tagNames = availableTags.map((t) => t.name);
                 const metadata = await extractDocumentMetadata(
                     firstPageText,
                     this.config.ocr,
                     log,
+                    tagNames.length > 0 ? tagNames : undefined,
                 );
 
                 if (extractName && metadata.title) {
@@ -90,6 +106,25 @@ export class OcrProcessor {
                         { documentDate: metadata.date },
                         'Extracted document date',
                     );
+                }
+
+                if (extractTags && metadata.tags.length > 0) {
+                    const tagMap = new Map(
+                        availableTags.map((t) => [t.name.toLowerCase(), t.id]),
+                    );
+
+                    for (const tagName of metadata.tags) {
+                        const tagId = tagMap.get(tagName.toLowerCase());
+                        if (tagId) {
+                            await this.papra.addTagToDocument(documentId, tagId);
+                            log.info({ tagName }, 'Added tag to document');
+                        } else {
+                            log.warn(
+                                { tagName },
+                                'LLM returned unknown tag, skipping',
+                            );
+                        }
+                    }
                 }
             } catch (err) {
                 log.error({ err }, 'Failed to extract document metadata');

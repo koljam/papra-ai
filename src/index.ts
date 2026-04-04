@@ -5,6 +5,7 @@ import { PapraClient } from './papra-client.js';
 import { OcrProcessor } from './ocr/processor.js';
 import { ProcessedState } from './ocr/state.js';
 import { OcrPoller } from './ocr/poller.js';
+import { startApiServer } from './api.js';
 
 const config = loadConfig();
 const log = createLogger(config.logLevel);
@@ -27,6 +28,7 @@ const state = await ProcessedState.load(
 const poller = new OcrPoller(config, papra, processor, state, log);
 
 poller.start();
+startApiServer(config.apiPort, state, log);
 
 process.on('SIGINT', () => {
     log.info('Shutting down');

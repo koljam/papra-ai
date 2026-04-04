@@ -16,7 +16,9 @@ const configSchema = z.object({
         processExisting: z.coerce.boolean().default(true),
         extractName: z.coerce.boolean().default(true),
         extractDate: z.coerce.boolean().default(true),
+        extractTags: z.coerce.boolean().default(true),
     }),
+    apiPort: z.coerce.number().int().positive().default(7777),
     dataDir: z.string().default('./data'),
     logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
@@ -40,7 +42,9 @@ export function loadConfig(): Config {
             processExisting: process.env.OCR_PROCESS_EXISTING,
             extractName: process.env.OCR_EXTRACT_NAME,
             extractDate: process.env.OCR_EXTRACT_DATE,
+            extractTags: process.env.OCR_EXTRACT_TAGS,
         },
+        apiPort: process.env.API_PORT,
         dataDir: process.env.DATA_DIR,
         logLevel: process.env.LOG_LEVEL as Config['logLevel'],
     });

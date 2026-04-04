@@ -11,6 +11,13 @@ export interface PapraDocument {
     updatedAt: string;
 }
 
+export interface PapraTag {
+    id: string;
+    name: string;
+    color: string;
+    description?: string;
+}
+
 export class PapraClient {
     private baseUrl: string;
     private orgId: string;
@@ -122,5 +129,40 @@ export class PapraClient {
         }
 
         this.log.info({ documentId, fields: Object.keys(updates) }, 'Updated document');
+    }
+
+    async listTags(): Promise<PapraTag[]> {
+        const res = await fetch(this.url('/tags'), {
+            headers: this.headers,
+        });
+
+        if (!res.ok) {
+            throw new Error(
+                `Failed to list tags: ${res.status} ${res.statusText}`,
+            );
+        }
+
+        const data = (await res.json()) as { tags: PapraTag[] };
+        return data.tags;
+    }
+
+    async addTagToDocument(
+        documentId: string,
+        tagId: string,
+    ): Promise<void> {
+        const res = await fetch(this.url(`/documents/${documentId}/tags`), {
+            method: 'POST',
+            headers: {
+                ...this.headers,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tagId }),
+        });
+
+        if (!res.ok) {
+            throw new Error(
+                `Failed to add tag ${tagId} to document ${documentId}: ${res.status} ${res.statusText}`,
+            );
+        }
     }
 }

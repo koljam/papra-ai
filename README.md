@@ -14,6 +14,26 @@ Polls Papra for PDF documents, converts pages to images, sends them to any OpenA
 - **Persistent state** -- tracks processed documents so work is never repeated
 - **First-run control** -- choose whether to OCR all existing documents or only new uploads
 
+### Document Metadata Extraction
+
+After OCR, the first page text is sent back to the LLM to automatically extract:
+
+- **Document name** -- renames the document in Papra to match its actual title (e.g. "scan_001.pdf" becomes "Invoice #1234.pdf")
+- **Document date** -- sets the document date in Papra based on dates found in the text
+- **Tags** -- matches document content against your existing Papra tags and applies any that fit
+
+Each extraction type can be individually enabled or disabled via environment variables. All three are enabled by default.
+
+### Reprocess API
+
+A lightweight HTTP server runs alongside the poller, allowing you to trigger reprocessing of specific documents:
+
+```bash
+curl -X POST http://localhost:7777/reprocess/doc_abc123
+```
+
+This removes the document from the processed list so it gets picked up on the next poll cycle. Useful for re-extracting metadata after updating your tags or fixing a bad OCR result.
+
 ## Quick Start
 
 Add to your Papra `docker-compose.yml`:
@@ -28,6 +48,8 @@ papra-ai:
         OCR_API_URL: https://openrouter.ai/api/v1
         OCR_API_KEY: sk-or-v1-your_key_here
         OCR_MODEL: google/gemini-2.5-flash
+    ports:
+        - 7777:7777 # reprocess API
     volumes:
         - papra-ai-data:/app/data # persist processed state across restarts
 ```
@@ -50,10 +72,20 @@ papra-ai:
 | `OCR_IMAGE_SCALE`           | no       | `2`                           | Scale factor for PDF page rendering                    |
 | `OCR_POLL_INTERVAL_SECONDS` | no       | `60`                          | Seconds between polling for new documents              |
 | `OCR_PROCESS_EXISTING`      | no       | `true`                        | Set to `false` to skip existing documents on first run |
+| `OCR_EXTRACT_NAME`          | no       | `true`                        | Extract document title from first page and rename      |
+| `OCR_EXTRACT_DATE`          | no       | `true`                        | Extract document date from first page                  |
+| `OCR_EXTRACT_TAGS`          | no       | `true`                        | Match and apply existing Papra tags to documents       |
+| `API_PORT`                  | no       | `7777`                        | Port for the reprocess API server                      |
 | `DATA_DIR`                  | no       | `./data`                      | Directory for persisting processed document state      |
 | `LOG_LEVEL`                 | no       | `info`                        | Log level (`debug`, `info`, `warn`, `error`)           |
 
-### Re-OCR all documents
+### Reprocessing documents
+
+To reprocess a single document:
+
+```bash
+curl -X POST http://localhost:7777/reprocess/DOCUMENT_ID
+```
 
 To re-process everything from scratch, stop the service, delete `data/processed.json`, and restart with `OCR_PROCESS_EXISTING=true` (the default).
 

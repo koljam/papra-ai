@@ -42,6 +42,14 @@ export class ProcessedState {
         await this.save();
     }
 
+    async remove(documentId: string): Promise<boolean> {
+        const existed = this.ids.delete(documentId);
+        if (existed) {
+            await this.save();
+        }
+        return existed;
+    }
+
     private async save(): Promise<void> {
         await mkdir(dirname(this.filePath), { recursive: true });
         await writeFile(this.filePath, JSON.stringify([...this.ids], null, 2));
