@@ -160,6 +160,11 @@ export class PapraClient {
             body: JSON.stringify({ tagId }),
         });
 
+        if (res.status === 409) {
+            this.log.debug({ documentId, tagId }, 'Tag already on document, skipping');
+            return;
+        }
+
         if (!res.ok) {
             const body = await res.text();
             throw new Error(
