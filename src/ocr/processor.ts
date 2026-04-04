@@ -2,7 +2,8 @@ import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 import { PapraClient } from '../papra-client.js';
 import { renderPdfPages } from './pdf-renderer.js';
-import { extractTextFromImage } from './llm-client.js';
+import { extractTextFromImage, extractDocumentMetadata } from './llm-client.js';
+import { extname } from 'node:path';
 
 export class OcrProcessor {
     private papra: PapraClient;
@@ -60,7 +61,42 @@ export class OcrProcessor {
             return;
         }
 
-        await this.papra.updateDocumentContent(documentId, fullText);
+        const updates: {
+            content: string;
+            name?: string;
+            documentDate?: string;
+        } = { content: fullText };
+
+        const { extractName, extractDate } = this.config.ocr;
+        const firstPageText = pageTexts[0];
+
+        if (firstPageText && (extractName || extractDate)) {
+            try {
+                const metadata = await extractDocumentMetadata(
+                    firstPageText,
+                    this.config.ocr,
+                    log,
+                );
+
+                if (extractName && metadata.title) {
+                    const ext = extname(doc.name) || '.pdf';
+                    updates.name = `${metadata.title}${ext}`;
+                    log.info({ newName: updates.name }, 'Extracted document name');
+                }
+
+                if (extractDate && metadata.date) {
+                    updates.documentDate = metadata.date;
+                    log.info(
+                        { documentDate: metadata.date },
+                        'Extracted document date',
+                    );
+                }
+            } catch (err) {
+                log.error({ err }, 'Failed to extract document metadata');
+            }
+        }
+
+        await this.papra.updateDocument(documentId, updates);
         log.info(
             { textLength: fullText.length, pages: pages.length },
             'OCR complete',

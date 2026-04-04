@@ -1,6 +1,37 @@
 import type { Config } from '../config.js';
 import type { Logger } from '../logger.js';
 
+const METADATA_SYSTEM_PROMPT = `You are a document metadata extractor. Given the text content of a document's first page, extract the document title and date.
+
+Rules:
+- title: The main title, heading, or name of the document as it appears in the text. If there is no clear title, return null.
+- date: The document's date (e.g. letter date, invoice date, report date, publication date). Return in ISO 8601 format (e.g. "2024-01-15T00:00:00.000Z"). If there is no clear date, return null.
+- Do NOT guess or fabricate values -- only extract what is clearly present in the text.`;
+
+const METADATA_SCHEMA = {
+    type: 'json_schema' as const,
+    json_schema: {
+        name: 'document_metadata',
+        schema: {
+            type: 'object',
+            properties: {
+                title: {
+                    type: ['string', 'null'],
+                    description:
+                        'The document title or name as it appears on the document, or null if not determinable',
+                },
+                date: {
+                    type: ['string', 'null'],
+                    description:
+                        'The document date in ISO 8601 format (e.g. 2024-01-15T00:00:00.000Z), or null if not determinable',
+                },
+            },
+            required: ['title', 'date'],
+            additionalProperties: false,
+        },
+    },
+};
+
 const SYSTEM_PROMPT = `You are a document OCR assistant. Extract ALL text from the provided document image(s).
 
 Rules:
@@ -73,4 +104,54 @@ export async function extractTextFromImage(
 
     log.debug({ textLength: text.length }, 'LLM extraction complete');
     return text;
+}
+
+export interface DocumentMetadata {
+    title: string | null;
+    date: string | null;
+}
+
+export async function extractDocumentMetadata(
+    text: string,
+    config: Config['ocr'],
+    log: Logger,
+): Promise<DocumentMetadata> {
+    const messages: ChatMessage[] = [
+        { role: 'system', content: METADATA_SYSTEM_PROMPT },
+        {
+            role: 'user',
+            content: `Extract the title and date from this document text:\n\n${text}`,
+        },
+    ];
+
+    const url = `${config.apiUrl.replace(/\/$/, '')}/chat/completions`;
+
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: config.model,
+            messages,
+            response_format: METADATA_SCHEMA,
+            temperature: 0,
+        }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`LLM API error ${res.status}: ${body}`);
+    }
+
+    const data = (await res.json()) as {
+        choices: Array<{ message: { content: string } }>;
+    };
+
+    const content = data.choices[0]?.message?.content ?? '{}';
+    const metadata = JSON.parse(content) as DocumentMetadata;
+
+    log.debug({ metadata }, 'Metadata extraction complete');
+    return metadata;
 }

@@ -95,13 +95,24 @@ export class PapraClient {
         documentId: string,
         content: string,
     ): Promise<void> {
+        await this.updateDocument(documentId, { content });
+    }
+
+    async updateDocument(
+        documentId: string,
+        updates: {
+            content?: string;
+            name?: string;
+            documentDate?: string;
+        },
+    ): Promise<void> {
         const res = await fetch(this.url(`/documents/${documentId}`), {
             method: 'PATCH',
             headers: {
                 ...this.headers,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify(updates),
         });
 
         if (!res.ok) {
@@ -110,6 +121,6 @@ export class PapraClient {
             );
         }
 
-        this.log.info({ documentId }, 'Updated document content');
+        this.log.info({ documentId, fields: Object.keys(updates) }, 'Updated document');
     }
 }
