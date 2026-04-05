@@ -47,7 +47,7 @@ papra-ai:
         PAPRA_ORG_ID: org_your_org_id
         OCR_API_URL: https://openrouter.ai/api/v1
         OCR_API_KEY: sk-or-v1-your_key_here
-        OCR_MODEL: google/gemini-2.5-flash
+        OCR_MODEL: mistralai/mistral-large-2512
     ports:
         - 7777:7777 # reprocess API
     volumes:
@@ -67,7 +67,7 @@ papra-ai:
 | `PAPRA_ORG_ID`              | yes      | --                           | Papra organization ID                                  |
 | `OCR_API_URL`               | yes      | --                           | OpenAI-compatible vision API base URL                  |
 | `OCR_API_KEY`               | yes      | --                           | API key for the vision model provider                  |
-| `OCR_MODEL`                 | no       | `google/gemini-2.5-flash`    | Vision model identifier                                |
+| `OCR_MODEL`                 | no       | `mistralai/mistral-large-2512` | Vision model identifier                              |
 | `OCR_CONCURRENCY`           | no       | `3`                          | Number of PDF pages processed in parallel per document |
 | `OCR_IMAGE_SCALE`           | no       | `2`                          | Scale factor for PDF page rendering                    |
 | `OCR_POLL_INTERVAL_SECONDS` | no       | `60`                         | Seconds between polling for new documents              |

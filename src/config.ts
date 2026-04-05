@@ -14,7 +14,7 @@ const configSchema = z.object({
     ocr: z.object({
         apiUrl: urlSchema,
         apiKey: z.string().min(1),
-        model: z.string().default('google/gemini-2.5-flash'),
+        model: z.string().default('mistralai/mistral-large-2512'),
         concurrency: z.coerce.number().int().positive().max(50).default(3),
         imageScale: z.coerce.number().positive().max(10).default(2),
         pollIntervalSeconds: z.coerce.number().int().positive().default(60),
